@@ -1,103 +1,118 @@
-import Image from "next/image";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+"use client";
+import { useEffect, useState } from "react";
+import { v4 as uuidv4 } from "uuid";
+import Header from "./components/header";
+import { Message } from "./models/message";
+import MessageItem from "./components/message_item";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [message, setMessage] = useState(""); 
+  const [loadResponse, setLoadResponse] = useState(false);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  const showIAOverwiew = async () => {
+    try {
+      const res = await fetch("http://127.0.0.1:8000/groq/overview", {
+        method: "GET",
+        headers: { "Content-Type": "application/json" }
+      });
+
+      if (!res.ok) {
+        // gestion des erreurs HTTP (ex : 401, 500)
+        const errorData = await res.json();
+        throw new Error(errorData?.error || "Erreur API");
+      }
+
+      setMessages([ 
+        { id: "1", role: "assistant", content: (await res.json()).replace(/\\n/g, "\n") },
+      ]); 
+
+    } catch (err: any) {
+      console.error("Erreur lors de l'appel API :", err.message);
+    }
+  } 
+
+  useEffect(() => {
+    showIAOverwiew()
+  },[]);
+
+  const handleSubmit = async (e: React.FormEvent) => { 
+      e.preventDefault();
+      // Appel API vers ton backend ou OpenAI directement
+      const newMessages: Message[] = messages ;
+      newMessages.push({ id: uuidv4(), role: "user", content: message  })
+      setMessage( "" );
+      setMessages(newMessages)
+
+      setTimeout(() => {setLoadResponse(true)} , 1000);
+
+      try {
+        const res = await fetch("http://127.0.0.1:8000/groq/test", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({message}),
+        });
+
+        if (!res.ok) {
+          // gestion des erreurs HTTP (ex : 401, 500)
+          const errorData = await res.json();
+          throw new Error(errorData?.error || "Erreur API");
+        }
+
+        const data = await res.json();
+
+        newMessages.push({
+          id: uuidv4(),
+          role: "assistant",
+          content: data.replace(/\\n/g, "\n") 
+        })
+        setLoadResponse(false)
+        setMessages(newMessages);
+
+      } catch (err: any) {
+        console.error("Erreur lors de l'appel API :", err.message);
+      } 
+  };
+
+  return (
+    <div className="h-screen flex flex-col w-[1150px]">
+      <Header />
+      <main className="h-[calc(100vh-64px)] bg-gray-100 p-4">
+        <div className="h-full flex flex-col">
+          <div className="flex-1 overflow-y-auto space-y-2">
+            {/* Zone scrollable */}
+            {messages && (
+              <div className="mt-6 rounded w-full">
+                {messages.map(message => <MessageItem key={message.id} message={message} />)}
+              </div>
+            )}
+            {loadResponse && <MessageItem key="000" message={new Message()} />}
+          </div>
+
+          <form onSubmit={handleSubmit} className="mt-4 flex gap-2">
+            <input
+              type="text" 
+              value={message}
+              onChange={(e) => setMessage(  e.target.value )}
+              className="flex-1 border px-4 py-2 rounded !h-12"
+              placeholder="Tape ton message..."
+              required 
+              onKeyDown={(e) => {
+                if ((e.key === "Enter") && (message && message.length == 0)) {
+                  e.preventDefault(); // empêche le submit
+                }
+              }}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <button 
+              className="bg-blue-600 text-white px-4 py-2 rounded disabled:bg-gray-400 disabled:cursor-not-allowed"
+              disabled={!(message.length > 0)}
+            >
+              Envoyer
+            </button>
+          </form>
         </div>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   );
 }
