@@ -16,6 +16,7 @@ export default function Home() {
 
   const showIAOverwiew = async () => {
     try {
+      console.log(`${base_url_online}/overview`)
       const res = await fetch(`${base_url_online}/overview`, {
         method: "GET",
         headers: { "Content-Type": "application/json" }
@@ -24,7 +25,7 @@ export default function Home() {
       if (!res.ok) {
         // gestion des erreurs HTTP (ex : 401, 500)
         const errorData = await res.json();
-        console.error(errorData?.error || "Erreur API");
+        console.log(errorData?.error || "Erreur API");
         throw new Error(errorData?.error || "Erreur API");
       }
 
@@ -33,7 +34,7 @@ export default function Home() {
       ]); 
 
     } catch (err: any) {
-      console.error("Erreur lors de l'appel API :", err.message);
+      console.log("Erreur lors de l'appel API :", err.message);
     }
   } 
 
@@ -52,6 +53,7 @@ export default function Home() {
       setTimeout(() => {setLoadResponse(true)} , 1000);
 
       try {
+        console.log(`${base_url_online}/test`)
         const res = await fetch(`${base_url_online}/test`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -61,7 +63,7 @@ export default function Home() {
         if (!res.ok) {
           // gestion des erreurs HTTP (ex : 401, 500)
           const errorData = await res.json();
-          console.error(errorData?.error || "Erreur API");
+          console.log(errorData?.error || "Erreur API");
           throw new Error(errorData?.error || "Erreur API");
         }
 
@@ -76,7 +78,7 @@ export default function Home() {
         setMessages(newMessages);
 
       } catch (err: any) {
-        console.error("Erreur lors de l'appel API :", err.message);
+        console.log("Erreur lors de l'appel API :", err.message);
       } 
   };
 
