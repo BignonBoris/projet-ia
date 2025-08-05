@@ -11,12 +11,12 @@ export default function Home() {
   const [message, setMessage] = useState(""); 
   const [loadResponse, setLoadResponse] = useState(false);
 
-  const base_url_online = "http://127.0.0.1:8000/groq";
+  const base_url_online = "https://fastapi-ia-74eo.onrender.com/groq";
   //const base_url_local = "http://127.0.0.1:8000/groq";
 
   const showIAOverwiew = async () => {
     try {
-      const res = await fetch(`"${base_url_online}/overview"`, {
+      const res = await fetch(`${base_url_online}/overview`, {
         method: "GET",
         headers: { "Content-Type": "application/json" }
       });
@@ -24,6 +24,7 @@ export default function Home() {
       if (!res.ok) {
         // gestion des erreurs HTTP (ex : 401, 500)
         const errorData = await res.json();
+        console.error(errorData?.error || "Erreur API");
         throw new Error(errorData?.error || "Erreur API");
       }
 
@@ -51,7 +52,7 @@ export default function Home() {
       setTimeout(() => {setLoadResponse(true)} , 1000);
 
       try {
-        const res = await fetch(`"${base_url_online}/test"`, {
+        const res = await fetch(`${base_url_online}/test`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({message}),
@@ -60,6 +61,7 @@ export default function Home() {
         if (!res.ok) {
           // gestion des erreurs HTTP (ex : 401, 500)
           const errorData = await res.json();
+          console.error(errorData?.error || "Erreur API");
           throw new Error(errorData?.error || "Erreur API");
         }
 
