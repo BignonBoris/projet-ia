@@ -11,9 +11,12 @@ export default function Home() {
   const [message, setMessage] = useState(""); 
   const [loadResponse, setLoadResponse] = useState(false);
 
+  const base_url_online = "http://127.0.0.1:8000/groq";
+  //const base_url_local = "http://127.0.0.1:8000/groq";
+
   const showIAOverwiew = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/groq/overview", {
+      const res = await fetch(`"${base_url_online}/overview"`, {
         method: "GET",
         headers: { "Content-Type": "application/json" }
       });
@@ -48,7 +51,7 @@ export default function Home() {
       setTimeout(() => {setLoadResponse(true)} , 1000);
 
       try {
-        const res = await fetch("http://127.0.0.1:8000/groq/test", {
+        const res = await fetch(`"${base_url_online}/test"`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({message}),
